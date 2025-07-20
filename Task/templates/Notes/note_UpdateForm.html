@@ -1,0 +1,62 @@
+{% extends 'Notes/main.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="header-bar">
+  <a href="{% url 'notes' %}">Go Back</a>
+</div>
+
+<div class="note-detail">
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <p>{{ form.title.label_tag }} {{ form.title }}</p>
+    <p>{{ form.description.label_tag }} {{ form.description }}</p>
+    <p>{{ form.complete.label_tag }} {{ form.complete }}</p>
+
+    {% if form.instance.pk and form.instance.image %}
+      <p>
+        Current image:
+        <a href="{{ form.instance.image.url }}">{{ form.instance.image.name|cut:"note_images/" }}</a>
+      </p>
+    {% endif %}
+
+    <p>{{ form.image.label_tag }} {{ form.image }}</p>
+
+    <!-- Tag widget (pre-populated) -->
+    <div class="tag-field"
+         data-tag-root
+         data-tag-input="#tag_input"
+         data-tag-hidden="#tags_hidden"
+         data-tag-container="#tag_container">
+      <label for="tag_input">Tags (press Enter to add)</label>
+      <input id="tag_input" type="text" placeholder="Type a tag and press Enter" autocomplete="off">
+      <input type="hidden" name="tags_hidden" id="tags_hidden" value="{{ existing_tags }}">
+      <div id="tag_container" class="tag-container"></div>
+    </div>
+
+    <button type="submit" class="button">Submit</button>
+  </form>
+</div>
+
+<!-- Tag widget JS -->
+<script type="module">
+  import { initAllTagWidgets } from "{% static 'js/tags.js' %}";
+  initAllTagWidgets();
+
+  const form = document.querySelector('.note-detail form');
+  const tagInput = document.getElementById('tag_input');
+
+  // Optional defensive add-on: if user leaves a tag half-typed and submits
+  form.addEventListener('submit', () => {
+    if (tagInput.value.trim()) {
+      const root = tagInput.closest('[data-tag-root]');
+      if (root && root._tagWidget) {
+        root._tagWidget.addTag(tagInput.value.trim());
+      }
+      tagInput.value = '';
+    }
+  });
+</script>
+{% endblock content %}

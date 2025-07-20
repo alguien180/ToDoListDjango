@@ -1,11 +1,36 @@
-<h3> Task Form </h3>
-<a href= "{% url 'notes' %}">Go Back</a>
-<form method ='POST' action=''>
+{% extends 'Notes/main.html' %}
+{% load static %}
 
-    {%csrf_token%}
-    {{form.as_p}}
+{% block content %}
+<div class="header-bar">
+    <a href="{% url 'notes' %}">Go Back</a>
+</div>
 
-    <input type="submit" value="Submit">
 
-    
-</form>
+<div class="note-detail">
+    <form method="POST" enctype="multipart/form-data" action="">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <!-- Tag widget block -->
+        <div class="tag-field"
+            data-tag-root
+            data-tag-input="#tag_input"
+            data-tag-hidden="#tags_hidden"
+            data-tag-container="#tag_container">
+        <label for="tag_input">Tags (press Enter to add)</label>
+        <input id="tag_input" type="text" placeholder="Type a tag and press Enter" autocomplete="off">
+        <input type="hidden" name="tags_hidden" id="tags_hidden" value="">
+        <div id="tag_container" class="tag-container"></div>
+        </div>
+
+        <input type="submit" value="Submit" class="button">
+    </form>
+</div>
+
+<!-- ES Module import -->
+<script type="module">
+  import { initAllTagWidgets } from "{% static 'js/tags.js' %}";
+  initAllTagWidgets();
+</script>
+{% endblock content %}

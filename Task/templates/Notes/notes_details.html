@@ -1,1 +1,15 @@
-<h1>Task: {{note}}</h1>
+{% extends 'Notes/main.html' %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="note-detail">
+  <h1>Task: {{ note.title }}</h1>
+
+  {% if note.image %}
+    <p><strong>Currently:</strong><br>{{ note.image.name|basename }}</p>
+    <img src="{{ note.image.url }}" alt="Image for {{ note.title }}" class="note-image">
+  {% else %}
+    <p><strong>No image attached.</strong></p>
+  {% endif %}
+</div>
+{% endblock content %}
