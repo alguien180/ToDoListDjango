@@ -1,0 +1,197 @@
+{% extends "Notes/main.html" %}
+{% load static split_tags %}
+
+{% block content %}
+
+<h1>Your To‑Do List</h1>
+
+<div class="task-layout">
+
+  <!-- ========== TASK FORM COLUMN ========== -->
+  <section class="task-form-wrapper">
+
+    <form id="task-form" method="post" action="{% url 'task_create' %}">
+      {% csrf_token %}
+      <input type="hidden" id="task_id" name="task_id">
+
+      <!-- Title -->
+      <label for="title">Title</label>
+      <input id="title" name="title" class="input" type="text" placeholder="What is the task today?" required>
+
+      <!-- Start / End Dates -->
+      <label for="start_date">Start Date</label>
+      <input id="start_date" name="start_date" class="input" type="date" required>
+
+      <label for="end_date">End Date</label>
+      <input id="end_date" name="end_date" class="input" type="date">
+
+      <!-- Start Time -->
+      <label for="start_time">Start Time</label>
+      <select id="start_time" name="start_time" class="input">
+        <option value="">Start time</option>
+        {% for h in time_slots %}
+          <option value="{{ h }}">{{ h }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- Auto end (1 hour) -->
+      <label class="inline-checkbox">
+        <input type="checkbox" id="autoEndHour">
+        1 hour length
+      </label>
+
+      <!-- End Time -->
+      <label for="end_time">End Time</label>
+      <select id="end_time" name="end_time" class="input">
+        <option value="">End time</option>
+        {% for h in time_slots %}
+          <option value="{{ h }}">{{ h }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- Priority -->
+      <label for="priority">Priority</label>
+      <select id="priority" name="priority" class="input">
+        <option value="L">Low</option>
+        <option value="M" selected>Medium</option>
+        <option value="H">High</option>
+      </select>
+
+      <!-- Notes -->
+      <label for="notes">Notes</label>
+      <textarea id="notes" name="notes" class="input" placeholder="Optional notes…"></textarea>
+
+      <!-- Repeat -->
+      <label for="repeat">Repeat</label>
+      <select id="repeat" name="repeat" class="input">
+        <option value="none" selected>Do not repeat</option>
+        <option value="daily">Repeat daily</option>
+        <option value="weekly">Repeat weekly</option>
+        <option value="monthly">Repeat monthly</option>
+        <option value="yearly">Repeat yearly</option>
+        <option value="custom">Repeat custom</option>
+      </select>
+
+      <!-- Repeat Until (shown/hidden by JS) -->
+      <div id="repeat-until-group" class="conditional-field" style="display:none">
+        <label for="repeat_until">Repeat Until</label>
+        <input id="repeat_until" name="repeat_until" class="input" type="date">
+      </div>
+
+      <!-- Custom Days -->
+      <div id="custom-days" class="conditional-field" style="display:none">
+        <span class="field-label">Custom Days</span>
+        <div class="weekday-checkboxes">
+          <label><input type="checkbox" name="custom_days" value="MO"> Mon</label>
+          <label><input type="checkbox" name="custom_days" value="TU"> Tue</label>
+          <label><input type="checkbox" name="custom_days" value="WE"> Wed</label>
+          <label><input type="checkbox" name="custom_days" value="TH"> Thu</label>
+          <label><input type="checkbox" name="custom_days" value="FR"> Fri</label>
+          <label><input type="checkbox" name="custom_days" value="SA"> Sat</label>
+          <label><input type="checkbox" name="custom_days" value="SU"> Sun</label>
+        </div>
+      </div>
+
+      <!-- Repeat Forever -->
+      <label class="inline-checkbox">
+        <input type="checkbox" id="repeat_forever" name="repeat_forever">
+        Repeat forever
+      </label>
+
+      <!-- Timezone -->
+      <label for="timezone">Timezone</label>
+      <select id="timezone" name="timezone" class="input">
+        <option value="UTC">UTC (Universal Time)</option>
+        <option value="Pacific/Midway">UTC−11:00 — Midway</option>
+        <option value="Pacific/Honolulu">UTC−10:00 — Honolulu</option>
+        <option value="America/Anchorage">UTC−09:00 — Anchorage</option>
+        <option value="America/Los_Angeles">UTC−08:00 — Los Angeles</option>
+        <option value="America/Denver">UTC−07:00 — Denver</option>
+        <option value="America/Mexico_City">UTC−06:00 — Mexico City</option>
+        <option value="America/Chicago">UTC−06:00 — Chicago</option>
+        <option value="America/Bogota">UTC−05:00 — Bogotá</option>
+        <option value="America/New_York">UTC−05:00 — New York</option>
+        <option value="America/Halifax">UTC−04:00 — Halifax</option>
+        <option value="America/St_Johns">UTC−03:30 — St. John’s</option>
+        <option value="America/Argentina/Buenos_Aires">UTC−03:00 — Buenos Aires</option>
+        <option value="Atlantic/Azores">UTC−01:00 — Azores</option>
+        <option value="Europe/London">UTC+00:00 — London</option>
+        <option value="Europe/Berlin">UTC+01:00 — Berlin</option>
+        <option value="Europe/Helsinki">UTC+02:00 — Helsinki</option>
+        <option value="Europe/Moscow">UTC+03:00 — Moscow</option>
+        <option value="Asia/Tehran">UTC+03:30 — Tehran</option>
+        <option value="Asia/Dubai">UTC+04:00 — Dubai</option>
+        <option value="Asia/Karachi">UTC+05:00 — Karachi</option>
+        <option value="Asia/Kolkata">UTC+05:30 — New Delhi</option>
+        <option value="Asia/Dhaka">UTC+06:00 — Dhaka</option>
+        <option value="Asia/Bangkok">UTC+07:00 — Bangkok</option>
+        <option value="Asia/Shanghai">UTC+08:00 — Shanghai</option>
+        <option value="Asia/Tokyo">UTC+09:00 — Tokyo</option>
+        <option value="Australia/Sydney">UTC+10:00 — Sydney</option>
+        <option value="Pacific/Noumea">UTC+11:00 — Nouméa</option>
+        <option value="Pacific/Auckland">UTC+12:00 — Auckland</option>
+      </select>
+
+      <!-- Tags (pills) -->
+      <label for="tag_input">Tags</label>
+      <input id="tag_input" class="input" type="text" placeholder="Add tags and press Enter" autocomplete="off">
+      <div id="tag-container" class="tag-container"></div>
+      <input type="hidden" id="tags_hidden" name="tags">
+
+      <!-- Color -->
+      <label for="color">Color</label>
+      <select id="color" name="color" class="input">
+        <option value="blue" selected>Blue</option>
+        <option value="red">Red</option>
+        <option value="orange">Orange</option>
+        <option value="yellow">Yellow</option>
+        <option value="green">Green</option>
+        <option value="purple">Purple</option>
+        <option value="gray">Gray</option>
+      </select>
+
+      <button type="submit" class="button submit-button">Save Task</button>
+    </form>
+
+  </section>
+
+  <!-- ========== CALENDAR COLUMN ========== -->
+  <section class="task-calendar-wrapper">
+    <!-- Event JSON & CSRF for JS -->
+    <input type="hidden" id="csrfToken" value="{{ csrf_token }}">
+    <script id="eventData" type="application/json">{{ task_events_json|safe }}</script>
+
+    <div id="calendar"></div>
+  </section>
+
+</div><!-- /.task-layout -->
+
+<!-- MODAL (hidden by default; JS handles visibility) -->
+<div id="eventModal" class="task-modal" hidden>
+  <div class="task-modal__inner">
+    <h3 id="modalTitle"></h3>
+    <p><strong>Date:</strong> <span id="modalDate"></span></p>
+    <p><strong>Time:</strong> <span id="modalTime"></span></p>
+    <p><strong>Notes:</strong> <span id="modalNotes"></span></p>
+    <p><strong>Tags:</strong> <span id="modalTags"></span></p>
+
+    <div class="modal-actions">
+      <button id="doneBtn" class="button" data-action="done">✔ Done</button>
+      <button id="allDoneBtn" class="button" data-action="done-all" style="display:none">🌀 All&nbsp;Done</button>
+      <button id="editBtn" class="button" data-action="edit">✏️ Edit</button>
+      <button id="deleteBtn" class="button is-danger" data-action="delete">🗑 Delete</button>
+      <button class="button is-ghost" data-action="close">✖ Close</button>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_scripts %}
+  <!-- FullCalendar (must load before task-manager.js if it instantiates calendar immediately) -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
+
+  <!-- JS modules / bundles -->
+  <script src="{% static 'js/tags.js' %}"></script>
+  <script src="{% static 'js/task-manager.js' %}"></script>
+{% endblock extra_scripts %}

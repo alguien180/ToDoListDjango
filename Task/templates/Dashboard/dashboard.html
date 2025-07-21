@@ -1,0 +1,222 @@
+{% extends "Notes/main.html" %}
+{% load static %}
+{% load split_tags %}
+
+{% block content %}
+
+<div class="dashboard-wrapper">
+
+  <!-- Local nav (optional if main.html already has global nav) -->
+  <nav class="sub-nav">
+    <ul class="nav-inline">
+      <li><a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a></li>
+      <li><a href="{% url 'task_manager' %}" class="{% if request.resolver_match.url_name == 'task_manager' %}active{% endif %}">To‑Do List</a></li>
+      <li><a href="{% url 'notes' %}" class="{% if request.resolver_match.url_name == 'notes' %}active{% endif %}">Notes</a></li>
+    </ul>
+
+    <div class="dashboard-actions">
+      <a href="#" class="export_dashboard_pdf">📄 PDF</a>
+      <a href="#" class="export_dashboard_doc">⬇️ Docx</a>
+      <select id="colourStyleSelect">
+        <option disabled selected>🎨 Colour Style</option>
+        <option value="">Default</option>
+        <option value="orange-black">Orange‑Black</option>
+        <option value="mono">Mono</option>
+        <option value="purple">Purple</option>
+        <option value="yellow">Yellow</option>
+      </select>
+    </div>
+  </nav>
+
+  <h1>Dashboard</h1>
+
+  <!-- TAG FILTER -->
+  <section class="dash-section">
+    <h3>Filter by Tags</h3>
+    <div class="tag-filter-controls">
+      <input id="tagSearch" class="input" type="text" placeholder="Type to filter tags…" autocomplete="off">
+      <button id="clearTags" type="button" class="button button--small is-ghost">Unselect all</button>
+    </div>
+
+    <div id="tag-selector" class="tag-list">
+      {% for tag in all_tags %}
+        {% with tag_name=tag.name|default:tag %}
+          <span class="tag-option {% if tag_name in selected_tags %}selected{% endif %}"
+                data-tag="{{ tag_name }}">{{ tag_name }}</span>
+        {% endwith %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- FILTER TYPE -->
+  <section class="dash-section" style="margin-top:1.5rem;">
+    <h3>Filter Type</h3>
+    <form id="typeFilterForm" method="get" class="filter-type-form">
+      <input type="hidden" name="tags" value="{{ selected_tags|join:',' }}">
+      <div class="filter-grid">
+        <label>
+          <input type="checkbox" name="show_notes" value="on"
+                 {% if show_notes %}checked{% endif %}>
+          Show notes
+        </label>
+
+        <label>
+          <input type="radio" name="task_filter" value="all"
+                 {% if request.GET.task_filter == 'all' or not request.GET.task_filter %}checked{% endif %}>
+          All tasks
+        </label>
+        <label>
+          <input type="radio" name="task_filter" value="incomplete"
+                 {% if request.GET.task_filter == 'incomplete' %}checked{% endif %}>
+          Incomplete
+        </label>
+        <label>
+          <input type="radio" name="task_filter" value="completed"
+                 {% if request.GET.task_filter == 'completed' %}checked{% endif %}>
+          Completed
+        </label>
+        <label>
+          <input type="radio" name="task_filter" value="none"
+                 {% if request.GET.task_filter == 'none' %}checked{% endif %}>
+          No tasks
+        </label>
+
+        <label class="group-colour-toggle">
+          <input id="groupColourToggle" type="checkbox" {% if group_colour %}checked{% endif %}>
+          Group by colour
+        </label>
+      </div>
+    </form>
+  </section>
+
+  <!-- INCOMPLETE TASKS -->
+  {% if incomplete_tasks %}
+    <section class="dash-section">
+      <h2>Tasks — Incomplete</h2>
+      {% if group_colour %}
+        {% regroup incomplete_tasks|dictsort:'color' by color as colour_groups %}
+        {% for grp in colour_groups %}
+          <h3 class="color-title {{ grp.grouper|lower }}">{{ grp.grouper|title }}</h3>
+          <ul class="task-list">
+            {% for t in grp.list %}
+              <li class="task-item">
+                <strong>{{ t.title }}</strong>
+                {% if t.start_date %}<span class="task-date">— {{ t.start_date|date:"M d, Y" }}</span>{% endif %}
+                {% if t.tags.all %}
+                  <div class="tag-container tag-container--inline">
+                    {% for tg in t.tags.all %}
+                      <span class="tag-pill tag-pill--small">{{ tg.name }}</span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% endfor %}
+      {% else %}
+        <ul class="task-list">
+          {% for t in incomplete_tasks %}
+            <li class="task-item">
+              <strong>{{ t.title }}</strong>
+              {% if t.start_date %}<span class="task-date">— {{ t.start_date|date:"M d, Y" }}</span>{% endif %}
+              {% if t.tags.all %}
+                <div class="tag-container tag-container--inline">
+                  {% for tg in t.tags.all %}
+                    <span class="tag-pill tag-pill--small">{{ tg.name }}</span>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  <!-- COMPLETED TASKS -->
+  {% if completed_tasks %}
+    <section class="dash-section">
+      <h2>Tasks — Completed</h2>
+      {% if group_colour %}
+        {% regroup completed_tasks|dictsort:'color' by color as colour_groups %}
+        {% for grp in colour_groups %}
+          <h3 class="color-title {{ grp.grouper|lower }}">{{ grp.grouper|title }}</h3>
+          <ul class="task-list completed">
+            {% for t in grp.list %}
+              <li class="task-item">
+                <s>{{ t.title }}</s>
+                {% if t.start_date %}<span class="task-date">— {{ t.start_date|date:"M d, Y" }}</span>{% endif %}
+                {% if t.tags.all %}
+                  <div class="tag-container tag-container--inline">
+                    {% for tg in t.tags.all %}
+                      <span class="tag-pill tag-pill--small">{{ tg.name }}</span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% endfor %}
+      {% else %}
+        <ul class="task-list completed">
+          {% for t in completed_tasks %}
+            <li class="task-item">
+              <s>{{ t.title }}</s>
+              {% if t.start_date %}<span class="task-date">— {{ t.start_date|date:"M d, Y" }}</span>{% endif %}
+              {% if t.tags.all %}
+                <div class="tag-container tag-container--inline">
+                  {% for tg in t.tags.all %}
+                    <span class="tag-pill tag-pill--small">{{ tg.name }}</span>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  <!-- NOTES -->
+  {% if show_notes and notes %}
+    <section class="dash-section">
+      <h2>Notes</h2>
+      <ul class="task-list">
+        {% for n in notes %}
+          <li class="task-item">
+            <strong>{{ n.title }}</strong>
+            {% if n.tags.all %}
+              <div class="tag-container tag-container--inline">
+                {% for tg in n.tags.all %}
+                  <span class="tag-pill tag-pill--small">{{ tg.name }}</span>
+                {% endfor %}
+              </div>
+            {% endif %}
+            {% if n.description %}
+              <p class="note-snippet">{{ n.description|truncatewords:30 }}</p>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  <!-- CALENDAR -->
+  <section class="dash-section">
+    <h2>Calendar</h2>
+    <div id="calendar"></div>
+    <script id="eventData" type="application/json">
+      {{ task_events_json|safe }}
+    </script>
+  </section>
+
+</div>
+
+{% endblock content %}
+
+{% block extra_scripts %}
+  <!-- FullCalendar -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
+  <!-- External dashboard JS bundle (all previous inline logic moved here) -->
+  <script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock extra_scripts %}

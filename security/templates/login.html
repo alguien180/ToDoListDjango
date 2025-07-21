@@ -1,0 +1,13 @@
+{% extends 'Notes/main.html' %}
+
+{% block content %}
+<h1>Login</h1>
+
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" class ="button" value="Login">
+</form>
+
+<p>Don't have an account? <a href="{% url 'register' %}" class ="button">Register</a></p>
+{% endblock content %}
