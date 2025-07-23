@@ -97,7 +97,7 @@
     {% if note.image %}
       <div class="note-image">
         <a href="{{ note.image.url }}" target="_blank">
-          <img src="{{ note.image.url }}" alt="{{ note.title }}">
+          <img src="{{ note.image.url }}" class="note-image" alt="{{ note.title }}" />
         </a>
       </div>
     {% endif %}

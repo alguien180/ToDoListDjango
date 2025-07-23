@@ -5,8 +5,8 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("tasks/", include("Task.urls")),       # Task-related views
-    path("accounts/", include("security.urls")),  # Login, logout, register
+    path("", include("Task.urls")),       # Task-related views
+    path("", include("security.urls")),  # Login, logout, register
 ]
 
 # Optional: Redirect root `/` to login or dashboard

@@ -1,0 +1,98 @@
+
+
+/*────────────────── Task‑manager layout ──────────────────*/
+.task-layout{
+  display:flex;
+  flex-wrap:wrap;
+  gap:2rem;
+  margin-top:1.5rem;
+}
+
+/* left column – form */
+.task-form-wrapper{
+  flex:0 0 340px;              /* fixed width on wide screens  */
+  display:flex;
+  flex-direction:column;
+  gap:1rem;
+  background:var(--card);
+  padding:1.25rem 1.5rem;
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+}
+
+/* right column – calendar */
+.task-calendar-wrapper{
+  flex:1 1 480px;              /* grow / shrink */
+  min-width:300px;
+  background:var(--card);
+  padding:1rem;
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+}
+
+/*────────────────── Form helpers ──────────────────*/
+.inline-checkbox{
+  display:inline-flex;
+  align-items:center;
+  gap:.45rem;
+  font-size:.82rem;
+  margin:.6rem 0;
+}
+
+.conditional-field{
+  margin-top:.6rem;
+}
+
+.weekday-checkboxes{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.5rem;
+  margin-top:.4rem;
+  font-size:.8rem;
+}
+
+.field-label{
+  display:block;
+  font-weight:600;
+  margin-bottom:.25rem;
+  color:var(--primary);
+}
+
+/* submit button variant (inherits .button base) */
+.submit-button{
+  margin-top:1.1rem;
+  width:100%;
+}
+
+/*────────────────── Modal ──────────────────*/
+.task-modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.35);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+
+.task-modal__inner{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:1.5rem 2rem;
+  width:100%;
+  max-width:420px;
+  box-shadow:var(--shadow);
+}
+
+.modal-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.6rem;
+  margin-top:1.3rem;
+}
+.hidden {
+  display: none;
+}
+.task-modal[hidden]{
+    display:none !important;
+}

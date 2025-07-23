@@ -40,6 +40,9 @@ from reportlab.lib.units import cm
 import pytz
 from docx import Document
 
+
+
+
 class NoteList(LoginRequiredMixin, ListView):
     template_name = 'Notes/notes_list.html'
     model = Note
@@ -142,9 +145,10 @@ class NoteCreate(LoginRequiredMixin, CreateView):
         tags_raw = self.request.POST.get('tags_hidden', '')
         for raw in [t.strip() for t in tags_raw.split(',') if t.strip()]:
             # Try case-insensitive match; create if not found
-            existing = Tag.objects.filter(name__iexact=raw).first()
+            existing = Tag.objects.filter(name__iexact=raw).first() #esto es ineficiente mejor el del get_or_create que esta en TASK aca haces 2 consultas, en el get or create hace 1 consulta para ambos
+            # lo ideal seria hacer el get or create
             tag = existing if existing else Tag.objects.create(name=raw)
-            self.object.tags.add(tag)
+            self.object.tags.add(tag) # esto es tomando de la misma nota, toma 
 
         return response
 
@@ -201,7 +205,7 @@ class NoteDelete(LoginRequiredMixin,DeleteView):
 
 class TaskListView(LoginRequiredMixin, ListView):
     model = Task
-    template_name = "tasks/TaskManager.html"      # create this template
+    template_name = "Task/TaskManager.html"      # create this template
     context_object_name = "incomplete_tasks"
     ordering = ["-date_created"]                # matches Task.Meta
 
@@ -223,7 +227,7 @@ class TaskListView(LoginRequiredMixin, ListView):
 
         # Example: optional tag filter (?tags=foo,bar)
         raw = self.request.GET.get("tags", "")
-        selected = parse_tag_string(raw)
+        selected = str(raw)
         ctx["selected_task_tags"] = selected
 
         if selected:
@@ -381,14 +385,16 @@ class TaskCreateView(LoginRequiredMixin, View):
         data = request.POST
 
         try:
-            # ── Tags: free‑text → Tag row (or None) ────────────────────
-            tag_string = (data.get("tags") or "").strip()
+            # ── Tags: free‑text → Tag row (or None) ──────────────────── ACA ESTA EL PEDO. SI haz el strip pero haz un lambda para cada tag que reciba, por cada objeto generar un tag nuevo. o hacer un create.
+            tag_string = (data.get("tags") or "").strip() #esto es la lista de tags.
             tag_obj = (
-                Tag.objects.get_or_create(tags=tag_string)[0]
+                Tag.objects.get_or_create(tags=tag_string)[0] # Cuando es generado, genera una tupla, si no hay nada = none
                 if tag_string else None
             )
 
             # ── Create row ────────────────────────────────────────────
+            #task = Este metodo genera una intancia del objecto task. Si quieres set los Tags a Task. 
+            # TIENES QUE ABAJO DE LA LLAMADA DE LA FUNCION, CREAR Task.set("el ") 
             task = Task.objects.create(
                 user             = request.user,
                 title            = data.get("title"),
@@ -403,10 +409,14 @@ class TaskCreateView(LoginRequiredMixin, View):
                 repeat_until     = data.get("repeat_until") or None,
                 repeat_forever   = data.get("repeat_forever") == "true",
                 notes            = data.get("notes") or "",
-                tags             = tag_obj,
+               # tags             = tag_obj,
                 color            = data.get("color") or "blue",
                 completed        = False,
             )
+            import ipdb #esto es para hacer debugging
+            ipdb.set_trace()
+            print(tag_obj)
+            #agrega un reverse lazy hacia el task code no ese desmadre de arriba
             return JsonResponse({"status": "ok", "task_id": task.id})
         except Exception as exc:
             return JsonResponse(
@@ -480,3 +490,140 @@ class TaskToggleView(LoginRequiredMixin, View):
         task.completed = not task.completed
         task.save()
         return redirect("task_manager")
+
+
+
+
+class DashboardView(LoginRequiredMixin, View):
+    template_name = "Dashboard/dashboard.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+
+        # Tags filter logic
+        selected_tags = self.request.GET.get("tags", "").split(",")
+        selected_tags = [tag.strip() for tag in selected_tags if tag.strip()]
+
+        # Task filtering
+        task_filter = self.request.GET.get("task_filter", "all")
+        show_notes = self.request.GET.get("show_notes") == "on"
+        group_colour = self.request.GET.get("group_colour") == "on"
+
+        tasks = Task.objects.filter(user=user)
+        if selected_tags:
+            tasks = tasks.filter(tags__name__in=selected_tags).distinct()
+
+        if task_filter == "completed":
+            completed_tasks = tasks.filter(completed=True)
+            incomplete_tasks = Task.objects.none()
+        elif task_filter == "incomplete":
+            completed_tasks = Task.objects.none()
+            incomplete_tasks = tasks.filter(completed=False)
+        elif task_filter == "none":
+            completed_tasks = Task.objects.none()
+            incomplete_tasks = Task.objects.none()
+        else:
+            completed_tasks = tasks.filter(completed=True)
+            incomplete_tasks = tasks.filter(completed=False)
+
+        notes = Note.objects.filter(user=user)
+        if selected_tags:
+            notes = notes.filter(tags__name__in=selected_tags).distinct()
+
+        all_tags = set(
+            list(tasks.values_list("tags__name", flat=True)) +
+            list(notes.values_list("tags__name", flat=True))
+        )
+
+        context.update({
+            "incomplete_tasks": incomplete_tasks,
+            "completed_tasks": completed_tasks,
+            "notes": notes if show_notes else None,
+            "all_tags": sorted(filter(None, all_tags)),
+            "selected_tags": selected_tags,
+            "show_notes": show_notes,
+            "group_colour": group_colour,
+            "task_events_json": self._build_events(tasks)
+        })
+        return context
+
+    @staticmethod
+    def _build_events(tasks):
+        events, MAX_REPEAT_DAYS = [], 730
+
+        def _hms(t):
+            if not t:
+                return ""
+            if isinstance(t, time):
+                return t.strftime("%H:%M:%S")
+            return str(t) if ":" in str(t) else f"{t}:00"
+
+        for task in tasks:
+            if not task.start_date:
+                continue
+
+            if task.repeat_forever:
+                end_limit = 365
+            elif task.repeat_until:
+                end_limit = max(0, min((task.repeat_until - task.start_date).days, MAX_REPEAT_DAYS))
+            else:
+                end_limit = 30
+
+            def add_event(date_obj):
+                has_start = bool(task.start_time)
+                has_end = bool(task.end_time)
+
+                start_iso = f"{date_obj}T{_hms(task.start_time)}" if has_start else str(date_obj)
+                end_iso = f"{date_obj}T{_hms(task.end_time)}" if has_end else None
+
+                evt = {
+                    "id": task.id,
+                    "title": task.title,
+                    "start": start_iso,
+                    "allDay": not has_start,
+                    "color": task.color,
+                    "extendedProps": {
+                        "notes": task.notes or "",
+                        "tags": task.tags.tags if task.tags else "",
+                        "priority": task.priority,
+                        "repeat": task.repeat,
+                        "timezone": task.timezone or "",
+                        "customDays": task.custom_days or "",
+                        "repeatUntil": str(task.repeat_until) if task.repeat_until else "",
+                        "repeatForever": str(task.repeat_forever).lower(),
+                        "rawDue": str(task.start_date),
+                        "start_time": _hms(task.start_time) if has_start else "",
+                        "end_time": _hms(task.end_time) if has_end else "",
+                    },
+                }
+                if end_iso:
+                    evt["end"] = end_iso
+                events.append(evt)
+
+            if task.repeat == "custom" and task.custom_days:
+                for d in get_recurring_dates(task.start_date, task.custom_days, end_limit):
+                    add_event(d)
+            else:
+                for i in range(end_limit + 1):
+                    if task.repeat == "daily":
+                        date = task.start_date + timedelta(days=i)
+                    elif task.repeat == "weekly":
+                        date = task.start_date + timedelta(weeks=i)
+                    elif task.repeat == "monthly":
+                        try:
+                            date = task.start_date.replace(month=(task.start_date.month + i - 1) % 12 + 1)
+                        except ValueError:
+                            continue
+                    elif task.repeat == "yearly":
+                        try:
+                            date = task.start_date.replace(year=task.start_date.year + i)
+                        except ValueError:
+                            continue
+                    else:
+                        date = task.start_date
+                        if i:
+                            break
+                    add_event(date)
+
+        return events

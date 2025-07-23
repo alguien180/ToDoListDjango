@@ -1,21 +1,63 @@
 {% load static %}
 <!DOCTYPE html>
 <html>  
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>To Do Items></title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width,initial-scale=1">
-        <!-- Link external CSS -->
-        <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    </head>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>To Do Items</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
 
-    <body>
-  <div class="container">
-    {% block content %}{% endblock content %}
-  </div>
-  {% block extra_scripts %}{% endblock extra_scripts %}
-</body>
+    <!-- Link external CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block css %}{% endblock css %}
+  </head>
 
+  <body>
+
+    <!-- Global Navigation -->
+    <nav class="sub-nav">
+      <ul class="nav-inline">
+        <li>
+          <a href="{% url 'dashboard' %}"
+             class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            Dashboard
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'task_manager' %}"
+             class="{% if request.resolver_match.url_name == 'task_manager' %}active{% endif %}">
+            To‑Do List
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'notes' %}"
+             class="{% if request.resolver_match.url_name == 'notes' %}active{% endif %}">
+            Notes
+          </a>
+        </li>
+      </ul>
+  
+        <select id="colourStyleSelect">
+          <option disabled selected>🎨 Colour Style</option>
+          <option value="">Default</option>
+          <option value="orange-black">Orange‑Black</option>
+          <option value="mono">Mono</option>
+          <option value="purple">Purple</option>
+          <option value="yellow">Yellow</option>
+        </select>
+
+    </nav>
+
+
+    <!-- Main Content Wrapper (centered, flexible) -->
+    <div class="layout">
+      <div class="container">
+        {% block content %}{% endblock content %}
+      </div>
+    </div>
+
+    {% block extra_scripts %}{% endblock extra_scripts %}
+
+  </body>
 </html>

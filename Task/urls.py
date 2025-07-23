@@ -4,14 +4,13 @@ from .views import (
     NoteList, NoteDetail, NoteCreate, NoteUpdate, NoteDelete,
     # TASKS
     TaskListView, TaskCreateView, TaskEditView, TaskDeleteView, TaskToggleView,
-    TaskICSExportView, TaskRescheduleView, TaskToggleSeriesView, TaskDeleteAPIView,DashboardView,
+    TaskICSExportView, TaskRescheduleView, TaskToggleSeriesView, TaskDeleteAPIView,DashboardView
 )
 
 
 
 urlpatterns = [
-        # ─────────── Dashboard ───────────
-    path("dashboard/", DashboardView.as_view(), name="dashboard"),   # ✅ NEW
+
 
     # ─────────── Notes ───────────
     path("notes/",                     NoteList.as_view(),   name="notes"),
@@ -34,4 +33,7 @@ urlpatterns = [
 
     # JSON‑only endpoint (keep it under an API prefix)
     path("api/tasks/<int:pk>/delete/", TaskDeleteAPIView.as_view(),     name="api_task_delete"),
+
+        # ─────────── Dashboard ───────────
+    path("dashboard/",                     DashboardView.as_view(),   name="dashboard"),
 ]

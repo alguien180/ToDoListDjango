@@ -1,9 +1,13 @@
 {% extends "Notes/main.html" %}
-{% load static split_tags %}
-
+{% load static %}
+ 
 {% block content %}
 
 <h1>Your To‑Do List</h1>
+
+
+ 
+
 
 <div class="task-layout">
 
@@ -192,6 +196,10 @@
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
 
   <!-- JS modules / bundles -->
-  <script src="{% static 'js/tags.js' %}"></script>
+
   <script src="{% static 'js/task-manager.js' %}"></script>
 {% endblock extra_scripts %}
+{% block css %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.css">
+ <link rel="stylesheet" href="{% static 'css/style-task_manager.css' %}">
+{% endblock css %}
