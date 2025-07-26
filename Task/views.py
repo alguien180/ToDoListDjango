@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.views.generic import TemplateView
 from django.utils.timezone import now
 from django.http import (
     HttpResponse,
@@ -39,7 +40,6 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 import pytz
 from docx import Document
-
 
 
 
@@ -229,6 +229,7 @@ class TaskListView(LoginRequiredMixin, ListView):
         raw = self.request.GET.get("tags", "")
         selected = str(raw)
         ctx["selected_task_tags"] = selected
+
 
         if selected:
             ctx["incomplete_tasks"] = ctx["incomplete_tasks"].filter(
@@ -466,14 +467,15 @@ class TaskEditView(LoginRequiredMixin, View):
 # -----------------------------------------------------------------
 #  DELETE  (confirmation page + redirect)
 # -----------------------------------------------------------------
-class TaskDeleteView(LoginRequiredMixin, DeleteView):
-    model = Task
+class TaskDeleteView(LoginRequiredMixin, View):
+    def get(self,request,*args,**kwargs):
 
-    success_url = reverse_lazy("task_manager")   # adjust namespace
+        task = get_object_or_404(Task, id=kwargs["pk"], user=request.user)
+        task.delete()
+        return redirect('task_manager')
 
-    def get_queryset(self):
-        # limit to current user
-        return Task.objects.filter(user=self.request.user)
+  
+
 
 
 # -----------------------------------------------------------------
@@ -485,16 +487,39 @@ class TaskToggleView(LoginRequiredMixin, View):
     POST /tasks/<pk>/toggle/
     Flip the “completed” flag, then redirect to task list.
     """
-    def post(self, request, pk):
+    def get(self, request, pk):
         task = get_object_or_404(Task, pk=pk, user=request.user)
         task.completed = not task.completed
         task.save()
         return redirect("task_manager")
 
 
+# -----------------------------------------------------------------
+#  HELPER in calendar get recurring dates
+# -----------------------------------------------------------------
 
-
-class DashboardView(LoginRequiredMixin, View):
+def get_recurring_dates(start_date, custom_days_str, limit_days):
+    weekdays = {
+        "Mon": 0,
+        "Tue": 1,
+        "Wed": 2,
+        "Thu": 3,
+        "Fri": 4,
+        "Sat": 5,
+        "Sun": 6,
+    }
+    days_selected = [
+        weekdays[d.strip()] for d in custom_days_str.split(",") if d.strip() in weekdays
+    ]
+    return [
+        start_date + timedelta(days=i)
+        for i in range(limit_days + 1)
+        if (start_date + timedelta(days=i)).weekday() in days_selected
+    ]
+# -----------------------------------------------------------------
+#  TOGGLE single task completed ↔ incomplete
+# -----------------------------------------------------------------
+class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = "Dashboard/dashboard.html"
 
     def get_context_data(self, **kwargs):
@@ -585,7 +610,7 @@ class DashboardView(LoginRequiredMixin, View):
                     "color": task.color,
                     "extendedProps": {
                         "notes": task.notes or "",
-                        "tags": task.tags.tags if task.tags else "",
+                        "tags": task.tags if task.tags else "",
                         "priority": task.priority,
                         "repeat": task.repeat,
                         "timezone": task.timezone or "",

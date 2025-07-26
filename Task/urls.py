@@ -7,11 +7,7 @@ from .views import (
     TaskICSExportView, TaskRescheduleView, TaskToggleSeriesView, TaskDeleteAPIView,DashboardView
 )
 
-
-
 urlpatterns = [
-
-
     # ─────────── Notes ───────────
     path("notes/",                     NoteList.as_view(),   name="notes"),
     path("notes/add/",                 NoteCreate.as_view(), name="note-create"),
@@ -23,8 +19,8 @@ urlpatterns = [
     path("tasks/",                     TaskListView.as_view(),          name="task_manager"),
     path("tasks/add/",                 TaskCreateView.as_view(),        name="task_create"),
     path("tasks/<int:pk>/edit/",       TaskEditView.as_view(),          name="task_edit"),
-    path("tasks/<int:pk>/delete/",     TaskDeleteView.as_view(),        name="task_delete"),
-    path("tasks/<int:pk>/toggle/",     TaskToggleView.as_view(),        name="task_toggle"),
+    path("tasks/<int:pk>/delete/",     TaskDeleteView.as_view(),        name="delete_task"),
+    path("tasks/<int:pk>/toggle/",     TaskToggleView.as_view(),        name="toggle_task"),
 
     # extras / API
     path("tasks/export/",              TaskICSExportView.as_view(),     name="tasks_export"),

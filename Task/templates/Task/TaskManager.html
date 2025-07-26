@@ -5,10 +5,6 @@
 
 <h1>Your To‑Do List</h1>
 
-
- 
-
-
 <div class="task-layout">
 
   <!-- ========== TASK FORM COLUMN ========== -->
@@ -158,6 +154,41 @@
     </form>
 
   </section>
+  <!-- ========== TASK LIST COLUMN ========== -->
+  
+    <!-- INCOMPLETE LIST (unchanged) -->
+    <h2 style="margin-top:2rem">Incomplete Tasks</h2>
+    <ul>
+      {% for task in incomplete_tasks %}
+        <li>
+          <strong>{{ task.title }}</strong> — Due: {{ task.due_date }}<br>
+          {% if task.tag_list %}<span class="tags">{% for t in task.tag_list %}<span class="tag">{{ t }}</span>{% endfor %}</span><br>{% endif %}
+          <a href="{% url 'toggle_task' task.id %}">✔ Mark as Complete</a>
+          <a href="{% url 'delete_task' task.id %}">🗑️ Delete</a>
+          <a href="#"
+             onclick="editTask({{ task.id }},'{{ task.title|escapejs }}','{{ task.due_date }}',
+                               '{{ task.priority }}','{{ task.notes|default_if_none:''|escapejs }}',
+                               '{{ task.repeat|default_if_none:'' }}','{{ task.timezone|default_if_none:'' }}',
+                               '{{ task.custom_days|default_if_none:'' }}','{{ task.repeat_until|default_if_none:'' }}',
+                               {{ task.repeat_forever|yesno:'true,false' }},'{{ task.tags|default_if_none:''|escapejs }}')">✏️ Edit</a>
+        </li>
+      {% empty %}<li>No incomplete tasks.</li>{% endfor %}
+    </ul>
+
+    <!-- COMPLETED LIST (unchanged) -->
+    <h2>Completed Tasks</h2>
+    <ul>
+      {% for task in completed_tasks %}
+        <li>
+          <strong>{{ task.title }}</strong> — Done<br>
+          <a href="{% url 'toggle_task' task.id %}">✔ Mark as Complete</a>
+          <a href="{% url 'delete_task' task.id %}">🗑️ Delete</a>
+        </li>
+      {% empty %}<li>No completed tasks.</li>{% endfor %}
+    </ul>
+  </div>
+
+
 
   <!-- ========== CALENDAR COLUMN ========== -->
   <section class="task-calendar-wrapper">
@@ -188,6 +219,8 @@
     </div>
   </div>
 </div>
+
+
 
 {% endblock content %}
 

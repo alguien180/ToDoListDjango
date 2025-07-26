@@ -200,14 +200,6 @@
     </section>
   {% endif %}
 
-  <!-- CALENDAR -->
-  <section class="dash-section">
-    <h2>Calendar</h2>
-    <div id="calendar"></div>
-    <script id="eventData" type="application/json">
-      {{ task_events_json|safe }}
-    </script>
-  </section>
 
 </div>
 
@@ -215,7 +207,7 @@
 
 {% block extra_scripts %}
   <!-- FullCalendar -->
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
+
   <!-- External dashboard JS bundle (all previous inline logic moved here) -->
   <script src="{% static 'js/dashboard.js' %}"></script>
 {% endblock extra_scripts %}
