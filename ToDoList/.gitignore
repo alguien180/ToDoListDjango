@@ -1,28 +1,71 @@
-# Python
+# Byte‑compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-*.log
+*$py.class
 
-# Translation files
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Translations
+*.mo
 *.pot
 
-# SQLite DB (optional — okay to keep for dev, ignore for prod)
+# Django stuff:
+*.log
+local_settings.py
 db.sqlite3
-
-# Media and user uploads
 /media/
 /note_images/
 
-# Static files (collected by collectstatic)
+# Static files
 staticfiles/
 
-# Virtual environment
+# Virtualenv
 venv/
 
-# VSCode or IDE configs
+# IDEs and editors
 .vscode/
 .idea/
+*.sublime-project
+*.sublime-workspace
 
-# OS/system files
+# OS files
 .DS_Store
 Thumbs.db
+
+# Environment variables
+.env
