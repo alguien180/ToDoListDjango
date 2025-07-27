@@ -1,8 +1,28 @@
-.log 
-*.pot 
-*.pyc 
-__pycache__ 
-db.sqlite3 
-media 
-staticfiles 
-note_images
+# Python
+__pycache__/
+*.py[cod]
+*.log
+
+# Translation files
+*.pot
+
+# SQLite DB (optional — okay to keep for dev, ignore for prod)
+db.sqlite3
+
+# Media and user uploads
+/media/
+/note_images/
+
+# Static files (collected by collectstatic)
+staticfiles/
+
+# Virtual environment
+venv/
+
+# VSCode or IDE configs
+.vscode/
+.idea/
+
+# OS/system files
+.DS_Store
+Thumbs.db
