@@ -19,6 +19,18 @@
 
 <hr>
 <h1>Notes</h1>
+{# Export buttons – pass along any active query‑string filters #}
+<div class="export-buttons">
+  <a class="button is-ghost"
+     href="{% url 'notes_export_pdf' %}?{{ request.GET.urlencode }}">
+     📄 Export selection as PDF
+  </a>
+
+  <a class="button is-ghost"
+     href="{% url 'notes_export_docx' %}?{{ request.GET.urlencode }}">
+     ⬇️ Export selection as Word
+  </a>
+</div>
 
 <div id="search-add-wrapper">
  <form method="GET">
@@ -30,6 +42,39 @@
   >
   <button class="button" type="submit">Search</button>
 </form>
+
+
+<form method="GET" id="status-filter" class="status-filter">
+  {# keep other active filters in the query‑string #}
+  {% if search_input %}
+    <input type="hidden" name="search-area" value="{{ search_input }}">
+  {% endif %}
+  {% if tags_query_string %}
+    <input type="hidden" name="tags" value="{{ tags_query_string }}">
+  {% endif %}
+
+  <label>
+    <input type="radio" name="status" value="all"
+           {% if status == "all" %}checked{% endif %}
+           onchange="this.form.submit()">
+    All
+  </label>
+
+  <label>
+    <input type="radio" name="status" value="incomplete"
+           {% if status == "incomplete" %}checked{% endif %}
+           onchange="this.form.submit()">
+    Incomplete
+  </label>
+
+  <label>
+    <input type="radio" name="status" value="complete"
+           {% if status == "complete" %}checked{% endif %}
+           onchange="this.form.submit()">
+    Completed
+  </label>
+</form>
+
 
  <a id="add-link" class="button button--new-note" href="{% url 'note-create' %}">New Note</a>
 
@@ -44,7 +89,7 @@
   {% endif %}
   <input type="hidden" id="tags_hidden" name="tags" value="{{ selected_tags|join:',' }}">
   <div class="tag-filter-bar" id="tag_toggle_holder">
-    <span class="tag-filter-label">Filter by tag(s):</span>
+    <span class="tag-filter-label">Filter by tag(s):</span> <br>
     {% for tag in all_tags %}
       <button type="button"
               class="tag-toggle-pill {% if tag.slug in selected_tags %}is-active{% endif %}"
@@ -53,7 +98,7 @@
         {{ tag.name }}
       </button>
     {% endfor %}
-    <button type="button" id="clear-tags-btn" class="button">Clear Tag Filters</button>
+    <button type="button" id="clear-tags-btn" class="button">Clear Tag Filters</button><br>
   </div>
 </form>
 
@@ -90,6 +135,11 @@
         <span class="tag-pill">{{ tag.name }}</span>
       {% endfor %}
     </div>
+
+           <small class="note-timestamps">
+         Created&nbsp;{{ note.created_at|date:"Y‑m‑d H:i" }} &bull; <br>
+         Updated&nbsp;{{ note.updated_at|timesince }} ago
+       </small>
   </div>
 
   <!-- Image and delete button -->

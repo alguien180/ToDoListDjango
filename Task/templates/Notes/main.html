@@ -14,42 +14,6 @@
   </head>
 
   <body>
-
-    <!-- Global Navigation -->
-    <nav class="sub-nav">
-      <ul class="nav-inline">
-        <li>
-          <a href="{% url 'dashboard' %}"
-             class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-            Dashboard
-          </a>
-        </li>
-        <li>
-          <a href="{% url 'task_manager' %}"
-             class="{% if request.resolver_match.url_name == 'task_manager' %}active{% endif %}">
-            To‑Do List
-          </a>
-        </li>
-        <li>
-          <a href="{% url 'notes' %}"
-             class="{% if request.resolver_match.url_name == 'notes' %}active{% endif %}">
-            Notes
-          </a>
-        </li>
-      </ul>
-  
-        <select id="colourStyleSelect">
-          <option disabled selected>🎨 Colour Style</option>
-          <option value="">Default</option>
-          <option value="orange-black">Orange‑Black</option>
-          <option value="mono">Mono</option>
-          <option value="purple">Purple</option>
-          <option value="yellow">Yellow</option>
-        </select>
-
-    </nav>
-
-
     <!-- Main Content Wrapper (centered, flexible) -->
     <div class="layout">
       <div class="container">
@@ -58,6 +22,5 @@
     </div>
 
     {% block extra_scripts %}{% endblock extra_scripts %}
-
   </body>
 </html>

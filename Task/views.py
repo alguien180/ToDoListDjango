@@ -1,124 +1,133 @@
-from django.shortcuts import render, redirect
-from django.views.generic.list import ListView
-from django.views.generic.detail import DetailView
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.views.generic import TemplateView
-from django.utils.timezone import now
-from django.http import (
-    HttpResponse,
-    JsonResponse,
-)
-from datetime import datetime, timedelta, time
-from io import BytesIO
+# ── Standard library ────────────────────────────────────────────────
 import json
+from io import BytesIO
 
-
-from django.urls import reverse_lazy
-
-from django.contrib.auth.mixins import LoginRequiredMixin
-
-
-from .models import Note, Tag,Task
-from django import forms
-from django.db.models import Q
-
-#other app imports
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect
-from django.views import View
-from django.views.generic.edit import DeleteView
-
-
-# ───── Third-party libs ───────────────────────────────────────────────
-from icalendar import Calendar, Event
+# ── Third‑party packages ────────────────────────────────────────────
 from docx import Document
 from docx.shared import Pt
-from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import cm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 import pytz
-from docx import Document
+from PIL import Image as PILImage
+from docx.shared import Inches
+from reportlab.platypus import Image as RLImage
+from django.utils import timezone
+# ── Django core ─────────────────────────────────────────────────────
+from django import forms
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
+from django.http import FileResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic.detail import DetailView
+from django.views.generic.edit import CreateView, DeleteView, UpdateView
+from django.views.generic.list import ListView
+
+# ── Local apps ──────────────────────────────────────────────────────
+from .models import Note, Tag
+
 
 
 
 class NoteList(LoginRequiredMixin, ListView):
-    template_name = 'Notes/notes_list.html'
+    template_name = "Notes/notes_list.html"
     model = Note
-    context_object_name = 'notes'
+    context_object_name = "notes"
 
-    # NEW: central queryset construction (adds user filter + tag filtering)
+    # ───────────────────────────────────────────────────────────
+    # Construct the queryset
+    # ───────────────────────────────────────────────────────────
     def get_queryset(self):
-        qs = super().get_queryset()
-        # Scope to current user (you were doing this in context; doing it here
-        # means downstream filters & counts start from correct set)
-        qs = qs.filter(user=self.request.user)
-        # Apply tag filters (single or multi)
-        qs = self.apply_tag_filters(qs)
-        return qs
+        queryset = (
+            super().get_queryset()
+            .filter(user=self.request.user)                 # always user‑scoped
+        )
 
-    # NEW: helper to apply tag filtering
-    def apply_tag_filters(self, qs):
-        """
-        Apply tag filtering based on ?tag= (single) or ?tags= (comma-separated).
-        Accepts tag slugs OR names (case-insensitive for names).
-        """
-        single = self.request.GET.get('tag', '').strip()
-        multi_raw = self.request.GET.get('tags', '').strip()
+        # Tag filtering (?tag=foo or ?tags=a,b)
+        queryset = self.apply_tag_filters(queryset)
+
+        # Status filtering (?status=incomplete / complete / all)
+        status_filter = self.request.GET.get("status", "all").lower()
+        self.current_status = status_filter                 # expose later
+        if status_filter == "incomplete":
+            queryset = queryset.filter(complete=False)
+        elif status_filter == "complete":
+            queryset = queryset.filter(complete=True)
+        # If "all", leave queryset unchanged
+
+        return queryset
+
+    # ───────────────────────────────────────────────────────────
+    # Helper: apply tag filters
+    # ───────────────────────────────────────────────────────────
+    def apply_tag_filters(self, queryset):
+        single_tag = self.request.GET.get("tag", "").strip()
+        multiple_tags_raw = self.request.GET.get("tags", "").strip()
 
         tag_terms = []
-        if single:
-            tag_terms.append(single)
-        if multi_raw:
-            tag_terms.extend([t.strip() for t in multi_raw.split(',') if t.strip()])
+        if single_tag:
+            tag_terms.append(single_tag)
+        if multiple_tags_raw:
+            tag_terms.extend(
+                tag.strip() for tag in multiple_tags_raw.split(",") if tag.strip()
+            )
 
         if not tag_terms:
-            return qs
+            return queryset
 
-        # Match slug exactly OR name case-insensitively.
-        return qs.filter(
-            Q(tags__slug__in=tag_terms) |
-            Q(tags__name__in=tag_terms)
+        return queryset.filter(
+            Q(tags__slug__in=tag_terms) | Q(tags__name__in=tag_terms)
         ).distinct()
 
-    # NEW: inject tag context (non-destructive)
-    def inject_tag_context(self, context):
-        single = self.request.GET.get('tag', '').strip()
-        multi_raw = self.request.GET.get('tags', '').strip()
+    # ───────────────────────────────────────────────────────────
+    # Helper: add tag‑related context
+    # ───────────────────────────────────────────────────────────
+    def add_tag_context(self, context):
+        single_tag = self.request.GET.get("tag", "").strip()
+        multiple_tags_raw = self.request.GET.get("tags", "").strip()
 
-        selected = []
-        if single:
-            selected.append(single)
-        if multi_raw:
-            selected.extend([t.strip() for t in multi_raw.split(',') if t.strip()])
+        selected_tags = []
+        if single_tag:
+            selected_tags.append(single_tag)
+        if multiple_tags_raw:
+            selected_tags.extend(
+                tag.strip() for tag in multiple_tags_raw.split(",") if tag.strip()
+            )
 
-        # All available tags for this user (to build pill UI)
-        context['all_tags'] = Tag.objects.filter(
-            notes__user=self.request.user
-        ).distinct().order_by('name')
-
-        context['selected_tags'] = selected
-        context['tags_query_string'] = ",".join(selected)
+        context["all_tags"] = (
+            Tag.objects.filter(notes__user=self.request.user)
+            .distinct()
+            .order_by("name")
+        )
+        context["selected_tags"] = selected_tags
+        context["tags_query_string"] = ",".join(selected_tags)
         return context
 
-    # ORIGINAL METHOD (body untouched except final return line)
+    # ───────────────────────────────────────────────────────────
+    # Build the template context
+    # ───────────────────────────────────────────────────────────
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Your original user scoping & count (qs already user-filtered in get_queryset,
-        # but we keep your logic intact as requested)
-        context['notes'] = context['notes'].filter(user=self.request.user)
-        context['count'] = context['notes'].filter(complete=False).count()
+        # Count of incomplete notes after all filters
+        context["count"] = context["notes"].filter(complete=False).count()
 
-        search_input = self.request.GET.get('search-area') or ''
-        if search_input:
-            context['notes'] = context['notes'].filter(title__icontains=search_input)
-        context['search_input'] = search_input
+        # Title search filter
+        search_term = self.request.GET.get("search-area", "")
+        if search_term:
+            context["notes"] = context["notes"].filter(title__icontains=search_term)
+        context["search_input"] = search_term
 
-        # Add tag context WITHOUT altering preceding logic
-        return self.inject_tag_context(context)
+        # Expose current status filter to the template
+        context["status"] = getattr(self, "current_status", "all")
 
+        # Add tag‑related helpers
+        return self.add_tag_context(context)
 
 
 
@@ -198,457 +207,80 @@ class NoteDelete(LoginRequiredMixin,DeleteView):
     success_url = reverse_lazy('notes')
 
 
+class _FilteredNotesMixin:
+    def get_notes(self):
+        qs = Note.objects.filter(user=self.request.user)
+        # Re‑use the same tag + search filters as NoteList
+        nl = NoteList()
+        nl.request = self.request
+        return nl.apply_tag_filters(qs)
 
 
-
-#from the other APP version
-
-class TaskListView(LoginRequiredMixin, ListView):
-    model = Task
-    template_name = "Task/TaskManager.html"      # create this template
-    context_object_name = "incomplete_tasks"
-    ordering = ["-date_created"]                # matches Task.Meta
-
-    def get_queryset(self):
-        return Task.objects.filter(
-            user=self.request.user,
-            completed=False
-        ).order_by("-date_created")
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        all_user_tasks = Task.objects.filter(user=self.request.user)
-
-        ctx["incomplete_tasks"] = all_user_tasks.filter(completed=False).order_by("-date_created")
-        ctx["completed_tasks"]  = all_user_tasks.filter(completed=True).order_by("-date_created")
-
-        # Provide a flat tag list for possible filtering UI (distinct)
-        ctx["all_task_tags"] = Tag.objects.filter(tasks__user=self.request.user).distinct().order_by("name")
-
-        # Example: optional tag filter (?tags=foo,bar)
-        raw = self.request.GET.get("tags", "")
-        selected = str(raw)
-        ctx["selected_task_tags"] = selected
-
-
-        if selected:
-            ctx["incomplete_tasks"] = ctx["incomplete_tasks"].filter(
-                Q(tags__name__in=selected) | Q(tags__slug__in=selected)
-            ).distinct()
-            ctx["completed_tasks"] = ctx["completed_tasks"].filter(
-                Q(tags__name__in=selected) | Q(tags__slug__in=selected)
-            ).distinct()
-
-        return ctx
-# ───────────────────────────────────────────────────────────────
-#  Task Export  (ICS)
-# ───────────────────────────────────────────────────────────────
-@method_decorator(csrf_exempt, name="dispatch")
-class TaskICSExportView(LoginRequiredMixin, View):
-    """GET → download an .ics file of *all* the user’s tasks."""
+class NotesExportPDF(_FilteredNotesMixin, View):
     def get(self, request):
-        tasks = (
-            Task.objects
-            .filter(user=request.user)
-            .order_by("start_date")
-        )
+        buf    = BytesIO()
+        doc    = SimpleDocTemplate(buf, pagesize=A4,
+                                   rightMargin=1*cm, leftMargin=1*cm,
+                                   topMargin=1*cm,  bottomMargin=1*cm)
+        styles = getSampleStyleSheet()
+        flow   = []
 
-        cal = Calendar()
-        cal.add("prodid", "-//TaskManager Export//")
-        cal.add("version", "2.0")
+        MAX_W, MAX_H = 14*cm, 14*cm
 
-        def str_to_time(t):
-            if not t:
-                return None
-            return (
-                datetime.strptime(t, "%H:%M").time()
-                if isinstance(t, str) else t
-            )
+        for n in self.get_notes():
+            # ➜ title with timestamps in parentheses
+            created = timezone.localtime(n.created_at).strftime("%d %b %Y %H:%M")
+            updated = timezone.localtime(n.updated_at).strftime("%d %b %Y %H:%M")
+            title   = f"{n.title}  ({created} • {updated})"
 
-        for task in tasks:
-            if not task.start_date:
-                continue
+            flow.append(Paragraph(title, styles["Heading2"]))
+            flow.append(Paragraph(n.description or "(no text)", styles["BodyText"]))
 
-            evt = Event()
-            evt.add("summary", task.title)
-            evt.add("description", task.notes or "")
+            if n.image:
+                pil    = PILImage.open(n.image.path)
+                w, h   = pil.size
+                scale  = min(MAX_W / w, MAX_H / h, 1)
+                flow.append(RLImage(n.image.path, width=w*scale, height=h*scale))
 
-            tz = pytz.timezone(task.timezone or "UTC")
-            start_dt = tz.localize(
-                datetime.combine(
-                    task.start_date,
-                    str_to_time(task.start_time) or datetime.min.time(),
-                )
-            )
+            flow.append(Spacer(1, 12))
 
-            if task.end_time:
-                end_dt = tz.localize(
-                    datetime.combine(task.start_date, str_to_time(task.end_time))
-                )
-                if end_dt < start_dt:  # crosses midnight
-                    end_dt += timedelta(days=1)
-            else:
-                end_dt = start_dt + timedelta(minutes=30)
+        doc.build(flow)
+        buf.seek(0)
+        return FileResponse(buf, as_attachment=True, filename="notes.pdf")
 
-            evt.add("dtstart", start_dt)
-            evt.add("dtend", end_dt)
-            cal.add_component(evt)
+from docx.shared import Pt      # already imported earlier
 
-        response = HttpResponse(
-            cal.to_ical(),
-            content_type="text/calendar",
-            headers={"Content-Disposition": 'attachment; filename="tasks.ics"'},
-        )
-        return response
+class NotesExportDocx(_FilteredNotesMixin, View):
+    def get(self, request):
+        doc = Document()
 
+        SMALL = Pt(9)            # ← 9‑point text (adjust as you like)
 
-# ───────────────────────────────────────────────────────────────
-#  Task Drag / Resize (reschedule)
-# ───────────────────────────────────────────────────────────────
-def _iso_to_dt(s):
-    if not s:  # empty / null
-        return None
-    if s.endswith("Z"):  # “Zulu” UTC marker
-        s = s[:-1] + "+00:00"
-    try:
-        return datetime.fromisoformat(s)  # Python 3.11+
-    except ValueError:
-        return None
-@method_decorator(csrf_exempt, name="dispatch")
-class TaskRescheduleView(LoginRequiredMixin, View):
-    """
-    POST  /tasks/<pk>/reschedule/
-    Payload: {"start": "...ISO...", "end": "...ISO..."|null}
-    """
-    def post(self, request, pk):
-        task = get_object_or_404(Task, pk=pk, user=request.user)
-        data = json.loads(request.body)
+        for n in self.get_notes():
+            created = timezone.localtime(n.created_at).strftime("%d %b %Y %H:%M")
+            updated = timezone.localtime(n.updated_at).strftime("%d %b %Y %H:%M")
 
-        start_dt = _iso_to_dt(data.get("start"))
-        if not start_dt:
-            return JsonResponse(
-                {"status": "error", "message": "Invalid start datetime"}, status=400
-            )
+            doc.add_heading(n.title, level=2)
 
-        task.start_date = start_dt.date()
-        end_dt = _iso_to_dt(data.get("end"))
-        task.end_date = end_dt.date() if end_dt else None
-        task.save()
-        return JsonResponse({"status": "ok"})
+            # ── creation line (small) ──────────────────────────────
+            p1 = doc.add_paragraph()
+            run1 = p1.add_run(f"Creation date:  {created}")
+            run1.font.size = SMALL
 
+            # ── modification line (small) ─────────────────────────
+            p2 = doc.add_paragraph()
+            run2 = p2.add_run(f"Last modified:  {updated}")
+            run2.font.size = SMALL
 
-# ───────────────────────────────────────────────────────────────
-#  Toggle *all* recurring instances
-# ───────────────────────────────────────────────────────────────
-@method_decorator(csrf_exempt, name="dispatch")
-class TaskToggleSeriesView(LoginRequiredMixin, View):
-    """
-    POST  /tasks/<pk>/toggle-series/
-    Flip completed ↔ incomplete for **all** tasks that share
-    title + start_date + repeat pattern with the clicked task.
-    """
-    def post(self, request, pk):
-        task = get_object_or_404(Task, pk=pk, user=request.user)
-        mark_done = not task.completed
-        Task.objects.filter(
-            title=task.title,
-            start_date__gte=task.start_date,
-            repeat=task.repeat,
-            user=request.user,
-        ).update(completed=mark_done)
-        return JsonResponse({"status": "ok"})
+            # description + image
+            doc.add_paragraph(n.description or "(no text)")
+            if n.image:
+                doc.add_picture(n.image.path, width=Inches(5))
 
+            doc.add_paragraph()   # blank line between notes
 
-# ───────────────────────────────────────────────────────────────
-#  Delete via API
-# ───────────────────────────────────────────────────────────────
-@method_decorator(csrf_exempt, name="dispatch")
-class TaskDeleteAPIView(LoginRequiredMixin, View):
-    """
-    POST  /api/tasks/<pk>/delete/
-    Returns {"status":"ok"} on success.
-    """
-    def post(self, request, pk):
-        task = get_object_or_404(Task, pk=pk, user=request.user)
-        task.delete()
-        return JsonResponse({"status": "ok"})
-
-# -----------------------------------------------------------------
-#  CREATE  (AJAX posts the form fields)
-# -----------------------------------------------------------------
-@method_decorator(csrf_exempt, name="dispatch")
-class TaskCreateView(LoginRequiredMixin, View):
-    """
-    POST /tasks/add/
-    Returns {"status":"ok","task_id":<id>} or {"status":"error", ...}
-    """
-    def post(self, request):
-        data = request.POST
-
-        try:
-            # ── Tags: free‑text → Tag row (or None) ──────────────────── ACA ESTA EL PEDO. SI haz el strip pero haz un lambda para cada tag que reciba, por cada objeto generar un tag nuevo. o hacer un create.
-            tag_string = (data.get("tags") or "").strip() #esto es la lista de tags.
-            tag_obj = (
-                Tag.objects.get_or_create(tags=tag_string)[0] # Cuando es generado, genera una tupla, si no hay nada = none
-                if tag_string else None
-            )
-
-            # ── Create row ────────────────────────────────────────────
-            #task = Este metodo genera una intancia del objecto task. Si quieres set los Tags a Task. 
-            # TIENES QUE ABAJO DE LA LLAMADA DE LA FUNCION, CREAR Task.set("el ") 
-            task = Task.objects.create(
-                user             = request.user,
-                title            = data.get("title"),
-                start_date       = data.get("start_date"),
-                end_date         = data.get("end_date") or None,
-                start_time       = data.get("start_time") or None,
-                end_time         = data.get("end_time") or None,
-                priority         = data.get("priority") or "M",
-                repeat           = data.get("repeat") or "",
-                timezone         = data.get("timezone") or "",
-                custom_days      = data.get("custom_days") or "",
-                repeat_until     = data.get("repeat_until") or None,
-                repeat_forever   = data.get("repeat_forever") == "true",
-                notes            = data.get("notes") or "",
-               # tags             = tag_obj,
-                color            = data.get("color") or "blue",
-                completed        = False,
-            )
-            import ipdb #esto es para hacer debugging
-            ipdb.set_trace()
-            print(tag_obj)
-            #agrega un reverse lazy hacia el task code no ese desmadre de arriba
-            return JsonResponse({"status": "ok", "task_id": task.id})
-        except Exception as exc:
-            return JsonResponse(
-                {"status": "error", "message": str(exc)},
-                status=400,
-            )
-
-
-# -----------------------------------------------------------------
-#  EDIT / UPDATE
-# -----------------------------------------------------------------
-@method_decorator(csrf_exempt, name="dispatch")
-class TaskEditView(LoginRequiredMixin, View):
-    """
-    POST /tasks/<pk>/edit/
-    Same payload as “create”; returns {"status":"ok","task_id":<pk>}
-    """
-    def post(self, request, pk):
-        task = get_object_or_404(Task, pk=pk, user=request.user)
-        data = request.POST
-
-        # ── Tags ─────────────────────────────────────────────────────
-        tag_string = (data.get("tags") or "").strip()
-        task.tags = (
-            Tag.objects.get_or_create(tags=tag_string)[0]
-            if tag_string else None
-        )
-
-        # ── Simple scalar fields ─────────────────────────────────────
-        scalar_fields = [
-            "title", "start_date", "end_date",
-            "start_time", "end_time", "priority",
-            "repeat", "timezone", "custom_days",
-            "repeat_until", "notes", "color",
-        ]
-        for fld in scalar_fields:
-            val = data.get(fld) or None
-            setattr(task, fld, val)
-
-        # ── Flags ────────────────────────────────────────────────────
-        task.repeat_forever = data.get("repeat_forever") == "true"
-
-        task.save()
-        return JsonResponse({"status": "ok", "task_id": task.id})
-
-
-# -----------------------------------------------------------------
-#  DELETE  (confirmation page + redirect)
-# -----------------------------------------------------------------
-class TaskDeleteView(LoginRequiredMixin, View):
-    def get(self,request,*args,**kwargs):
-
-        task = get_object_or_404(Task, id=kwargs["pk"], user=request.user)
-        task.delete()
-        return redirect('task_manager')
-
-  
-
-
-
-# -----------------------------------------------------------------
-#  TOGGLE single task completed ↔ incomplete
-# -----------------------------------------------------------------
-@method_decorator(csrf_exempt, name="dispatch")
-class TaskToggleView(LoginRequiredMixin, View):
-    """
-    POST /tasks/<pk>/toggle/
-    Flip the “completed” flag, then redirect to task list.
-    """
-    def get(self, request, pk):
-        task = get_object_or_404(Task, pk=pk, user=request.user)
-        task.completed = not task.completed
-        task.save()
-        return redirect("task_manager")
-
-
-# -----------------------------------------------------------------
-#  HELPER in calendar get recurring dates
-# -----------------------------------------------------------------
-
-def get_recurring_dates(start_date, custom_days_str, limit_days):
-    weekdays = {
-        "Mon": 0,
-        "Tue": 1,
-        "Wed": 2,
-        "Thu": 3,
-        "Fri": 4,
-        "Sat": 5,
-        "Sun": 6,
-    }
-    days_selected = [
-        weekdays[d.strip()] for d in custom_days_str.split(",") if d.strip() in weekdays
-    ]
-    return [
-        start_date + timedelta(days=i)
-        for i in range(limit_days + 1)
-        if (start_date + timedelta(days=i)).weekday() in days_selected
-    ]
-# -----------------------------------------------------------------
-#  TOGGLE single task completed ↔ incomplete
-# -----------------------------------------------------------------
-class DashboardView(LoginRequiredMixin, TemplateView):
-    template_name = "Dashboard/dashboard.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        user = self.request.user
-
-        # Tags filter logic
-        selected_tags = self.request.GET.get("tags", "").split(",")
-        selected_tags = [tag.strip() for tag in selected_tags if tag.strip()]
-
-        # Task filtering
-        task_filter = self.request.GET.get("task_filter", "all")
-        show_notes = self.request.GET.get("show_notes") == "on"
-        group_colour = self.request.GET.get("group_colour") == "on"
-
-        tasks = Task.objects.filter(user=user)
-        if selected_tags:
-            tasks = tasks.filter(tags__name__in=selected_tags).distinct()
-
-        if task_filter == "completed":
-            completed_tasks = tasks.filter(completed=True)
-            incomplete_tasks = Task.objects.none()
-        elif task_filter == "incomplete":
-            completed_tasks = Task.objects.none()
-            incomplete_tasks = tasks.filter(completed=False)
-        elif task_filter == "none":
-            completed_tasks = Task.objects.none()
-            incomplete_tasks = Task.objects.none()
-        else:
-            completed_tasks = tasks.filter(completed=True)
-            incomplete_tasks = tasks.filter(completed=False)
-
-        notes = Note.objects.filter(user=user)
-        if selected_tags:
-            notes = notes.filter(tags__name__in=selected_tags).distinct()
-
-        all_tags = set(
-            list(tasks.values_list("tags__name", flat=True)) +
-            list(notes.values_list("tags__name", flat=True))
-        )
-
-        context.update({
-            "incomplete_tasks": incomplete_tasks,
-            "completed_tasks": completed_tasks,
-            "notes": notes if show_notes else None,
-            "all_tags": sorted(filter(None, all_tags)),
-            "selected_tags": selected_tags,
-            "show_notes": show_notes,
-            "group_colour": group_colour,
-            "task_events_json": self._build_events(tasks)
-        })
-        return context
-
-    @staticmethod
-    def _build_events(tasks):
-        events, MAX_REPEAT_DAYS = [], 730
-
-        def _hms(t):
-            if not t:
-                return ""
-            if isinstance(t, time):
-                return t.strftime("%H:%M:%S")
-            return str(t) if ":" in str(t) else f"{t}:00"
-
-        for task in tasks:
-            if not task.start_date:
-                continue
-
-            if task.repeat_forever:
-                end_limit = 365
-            elif task.repeat_until:
-                end_limit = max(0, min((task.repeat_until - task.start_date).days, MAX_REPEAT_DAYS))
-            else:
-                end_limit = 30
-
-            def add_event(date_obj):
-                has_start = bool(task.start_time)
-                has_end = bool(task.end_time)
-
-                start_iso = f"{date_obj}T{_hms(task.start_time)}" if has_start else str(date_obj)
-                end_iso = f"{date_obj}T{_hms(task.end_time)}" if has_end else None
-
-                evt = {
-                    "id": task.id,
-                    "title": task.title,
-                    "start": start_iso,
-                    "allDay": not has_start,
-                    "color": task.color,
-                    "extendedProps": {
-                        "notes": task.notes or "",
-                        "tags": task.tags if task.tags else "",
-                        "priority": task.priority,
-                        "repeat": task.repeat,
-                        "timezone": task.timezone or "",
-                        "customDays": task.custom_days or "",
-                        "repeatUntil": str(task.repeat_until) if task.repeat_until else "",
-                        "repeatForever": str(task.repeat_forever).lower(),
-                        "rawDue": str(task.start_date),
-                        "start_time": _hms(task.start_time) if has_start else "",
-                        "end_time": _hms(task.end_time) if has_end else "",
-                    },
-                }
-                if end_iso:
-                    evt["end"] = end_iso
-                events.append(evt)
-
-            if task.repeat == "custom" and task.custom_days:
-                for d in get_recurring_dates(task.start_date, task.custom_days, end_limit):
-                    add_event(d)
-            else:
-                for i in range(end_limit + 1):
-                    if task.repeat == "daily":
-                        date = task.start_date + timedelta(days=i)
-                    elif task.repeat == "weekly":
-                        date = task.start_date + timedelta(weeks=i)
-                    elif task.repeat == "monthly":
-                        try:
-                            date = task.start_date.replace(month=(task.start_date.month + i - 1) % 12 + 1)
-                        except ValueError:
-                            continue
-                    elif task.repeat == "yearly":
-                        try:
-                            date = task.start_date.replace(year=task.start_date.year + i)
-                        except ValueError:
-                            continue
-                    else:
-                        date = task.start_date
-                        if i:
-                            break
-                    add_event(date)
-
-        return events
+        buf = BytesIO()
+        doc.save(buf)
+        buf.seek(0)
+        return FileResponse(buf, as_attachment=True,
+                            filename="notes.docx")

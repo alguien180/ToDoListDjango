@@ -36,29 +36,7 @@ body {
   width: 100%;
   max-width: 1200px;
   box-sizing: border-box;
-}
-/* =============== Top nav bar =============== */
-
-.sub-nav {
-  width: 100%;
-  max-width: none;
-  background: var(--sidebar-bg);
-  border-radius: 0 0 var(--radius) var(--radius);
-  padding: 0.75rem 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  box-shadow: var(--shadow);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-
-.layout {
-  max-width: 1200px;
   margin: 0 auto;
-  padding: 1rem;
 }
 
 /*────────────────── Containers ──────────────────*/
@@ -106,6 +84,7 @@ body {
   color: var(--bg);
   text-decoration: none;
 }
+
 
 /*────────────────── Search and Add ──────────────────*/
 #search-add-wrapper {
@@ -275,8 +254,6 @@ label {
   border-color: var(--primary-h);
   box-shadow: 0 0 0 2px rgba(0, 94, 184, 0.15);
 }
-
-
 /*────────────────── Notes Display ──────────────────*/
 .note-image {
     max-width: 150px;
@@ -363,8 +340,7 @@ label {
 .note-image img {
   max-width: 100%;
   height: auto;
-  border-radius: 6px;
-  
+  border-radius: 6px;  
 }
 
 .note-content {
@@ -372,6 +348,31 @@ label {
   min-width: 0;
 }
 
+.note-snippet {
+  margin: .5rem 0 0;
+  font-size: .8rem;
+  color: var(--muted);
+}
+
+/* ▼ NEW: smaller timestamp line ▼ */
+.note-timestamps{
+  font-size:.72rem;      /* ~72 % of normal body text */
+  color:var(--muted);    /* optional grey tone        */
+}
+/*────────────────── Completion filter ──────────────────*/
+  /* tiny, unobtrusive radio bar */
+  .status-filter{
+      display:inline-flex;        /* keep it next to the search bar if space */
+      flex-direction:column;      /* stack radios vertically                  */
+      gap:.35rem;                 /* space between each option                */
+      font-size:.8rem;
+      margin:.4rem 0 1rem;
+  }
+  .status-filter label{
+      display:inline-flex;
+      gap:.2rem;
+      align-items:center;
+  }
 /*────────────────── Delete Link ──────────────────*/
 .delete-link {
   font-size: 1.2rem;
@@ -382,7 +383,6 @@ label {
   align-self: center;
   /* Align top */
 }
-
 /*────────────────── Tags ──────────────────*/
 .tag-field {
   margin-top: 1rem;
@@ -426,7 +426,6 @@ label {
   font-size: 0.6rem;
   padding: 0.2rem 0.5rem;
 }
-
 
 /*────────────────── Regsiter format ──────────────────*/
 .help ul {
@@ -501,68 +500,6 @@ label {
   border-radius: 4px;
 }
 
-
-
-/*────────────────── Dashboard & Nav (new) ──────────────────*/
-.dashboard-wrapper {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1rem 1rem 2rem;
-}
-
-.sub-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  background: var(--sidebar-bg);
-  border-radius: var(--radius);
-  padding: .75rem 1rem;
-}
-
-.nav-inline {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.nav-inline a {
-  text-decoration: none;
-  color: var(--text);
-  font-weight: 500;
-  padding-bottom: .15rem;
-  transition: color .15s, border-color .15s;
-  border-bottom: 2px solid transparent;
-}
-.nav-inline a.active,
-.nav-inline a:hover {
-  color: var(--primary);
-  border-color: var(--primary);
-}
-
-/* actions reuse “ghost” button look */
-.dashboard-actions a {
-  @apply .button, .is-ghost;          /* if using Tailwind / PostCSS */
-}
-.dashboard-actions a,
-.dashboard-actions select {
-  font-size: .8rem;
-}
-
-.dashboard-actions select {
-  padding: var(--btn-pad-y) var(--btn-pad-x);
-  border: 1px solid var(--primary);
-  border-radius: var(--btn-radius);
-  background: var(--card);
-  cursor: pointer;
-}
-
 /*────────────────── Sections & Filters ──────────────────*/
 .dash-section {
   margin: 2rem 0;
@@ -595,33 +532,6 @@ label {
 .tag-option:hover { background: var(--primary-h); color: var(--card); }
 .tag-option.selected { background: var(--primary); color: var(--card); }
 
-/*────────────────── Task Lists ──────────────────*/
-.task-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: .5rem;
-}
-.task-item {
-  background: var(--card);
-  padding: .75rem 1rem;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  line-height: 1.4;
-  display: flex;
-  flex-direction: column;
-}
-.task-date { color: var(--muted); font-size: .75rem; }
-.task-list.completed s { color: var(--muted); }
-
-/* colour‑group headings */
-.color-title {
-  margin: 1.2rem 0 .4rem;
-  font-size: 1rem;
-  font-weight: 600;
-}
 
 /*────────────────── Tag variants ──────────────────*/
 .tag-container--inline { display: inline-flex; gap: .4rem; }
@@ -652,50 +562,6 @@ label {
 }
 .group-colour-toggle { font-weight: 600; }
 
-/* =============== Top‑navigation bar =============== */
-.top-nav {
-  background: var(--sidebar-bg);
-  box-shadow: var(--shadow);
-  padding: 0.6rem 1.2rem;
-  position: sticky;      /* stays at top while scrolling */
-  top: 0;
-  width: 100%;
-  z-index: 100;          /* above calendar & cards */
-}
-
-.top-nav .nav-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-/* ------ UL wrapper ------ */
-.top-nav .nav {
-  list-style: none;
-  display: flex;
-  gap: 1.5rem;
-  margin: 0;
-  padding: 0;
-  align-items: center;
-}
-
-/* ------ Links ------ */
-.top-nav .nav a {
-  color: var(--text);
-  text-decoration: none;
-  font-weight: 500;
-  padding: 0.45rem 1rem;
-  border-radius: 8px;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.top-nav .nav a:hover,
-.top-nav .nav a.active {
-  background: var(--sidebar-active);
-  color: var(--bg);
-}
 
 /* =============== Responsive tweaks =============== */
 @media (max-width: 768px) {
@@ -730,3 +596,30 @@ label {
   }
 }
 
+/*────────────────── Tiny‑screen fix (phones ≤ 480 px) ──────────────────*/
+@media (max-width: 480px){
+
+  /* 1) Stack the entire bar vertically */
+  #search-add-wrapper{
+      flex-direction: column;   /* ← was row */
+      align-items: stretch;     /* full‑width children */
+      gap: 0.9rem;              /* little breathing room */
+  }
+
+  /* 2) Make the search input stretch to full width */
+  #search-add-wrapper input[type="text"]{
+      width: 100%;
+  }
+
+  /* 3) The “New Note” button should also fill the line */
+  .button--new-note{
+      width: 100%;              /* block‑level button */
+      text-align: center;
+  }
+
+  /* 4) Status filter can go horizontal now that it has its own line */
+  .status-filter{
+      flex-direction: row;      /* radios left‑to‑right */
+      gap: .75rem;
+  }
+}
