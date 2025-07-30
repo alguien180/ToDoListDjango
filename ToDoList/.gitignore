@@ -6,14 +6,13 @@ __pycache__/
 # Translation files
 *.pot
 
-# SQLite DB (optional — okay to keep for dev, ignore for prod)
+# SQLite DB
 db.sqlite3
 
 # Media and user uploads
 /media/
-/note_images/
 
-# Static files (collected by collectstatic)
+# Static files collected for deployment
 staticfiles/
 
 # Virtual environment
@@ -26,3 +25,6 @@ venv/
 # OS/system files
 .DS_Store
 Thumbs.db
+
+# Optional: env file
+.env
