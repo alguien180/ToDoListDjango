@@ -1,0 +1,18 @@
+version: 1.0
+runtime: python311
+
+build:
+  commands:
+    build:
+      # Optional: only keep if you need something during build time
+      - python3 -m ensurepip --upgrade
+      - pip3 install --upgrade pip
+
+run:
+  runtime-version: 3.11
+  pre-run:
+    - pip3 install -r requirements.txt
+  command: sh startup.sh
+
+  network:
+    port: 8000                   # defaults to 8080, so override here if your app listens on 8000
