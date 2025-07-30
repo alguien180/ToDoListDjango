@@ -1,3 +1,6 @@
 #!/bin/bash 
+set -e  # Exit on first error
+
+python3 manage.py migrate --noinput
 python3 manage.py collectstatic --noinput 
-gunicorn task_manager.wsgi:application --bind 0.0.0.0:8000
+exec gunicorn ToDoList.wsgi:application --bind 0.0.0.0:8000
