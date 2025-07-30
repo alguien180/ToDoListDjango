@@ -32,4 +32,3 @@ class RegisterPage(FormView):
         if self.request.user.is_authenticated:
             return redirect('notes')
         return super(RegisterPage,self).get(*args,**kwargs)#overwriting the top fnuction because it did not stopped logged users from entering the create account
-git 
