@@ -1,13 +1,22 @@
-{% extends 'Notes/main.html' %}
+{% extends 'main.html' %}
 
 {% block content %}
 <div class="note-detail auth-form">
   <h1>Register</h1>
 
+  {# ---------- Display non-field errors (e.g. password mismatch) ---------- #}
+  {% if form.non_field_errors %}
+    <ul class="errorlist">
+      {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
   <form method="POST" novalidate>
     {% csrf_token %}
 
-    <!-- Username -->
+    {# ---------- Username ---------- #}
     <div class="form-row">
       {{ form.username.label_tag }}
       {{ form.username }}
@@ -19,7 +28,7 @@
       {% endfor %}
     </div>
 
-    <!-- Password -->
+    {# ---------- Password ---------- #}
     <div class="form-row">
       {{ form.password1.label_tag }}
       {{ form.password1 }}
@@ -31,7 +40,7 @@
       {% endfor %}
     </div>
 
-    <!-- Password confirmation -->
+    {# ---------- Password confirmation ---------- #}
     <div class="form-row">
       {{ form.password2.label_tag }}
       {{ form.password2 }}
