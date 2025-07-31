@@ -1,0 +1,625 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap');
+
+/*────────────────── CSS Custom Properties ──────────────────*/
+:root {
+  --bg: rgb(248, 249, 250);
+  --card: rgb(255, 255, 255);
+  --text: rgb(30, 30, 30);
+  --muted: rgb(100, 100, 100);
+  --primary: rgb(0, 94, 184);
+  --primary-h: rgb(0, 73, 143);
+  --accent: rgb(230, 230, 230);
+  --sidebar-bg: rgb(240, 243, 245);
+  --sidebar-active: rgb(0, 73, 143);
+  --radius: 1.5rem;
+  --fc-bg: rgb(255, 255, 255);
+  --shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+/*────────────────── Base Layout ──────────────────*/
+body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+
+  align-items: flex-start;
+  min-height: 100vh;
+}
+
+.layout {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 2rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 1200px;
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+/*────────────────── Containers ──────────────────*/
+.container {
+  max-width: 550px;
+  margin: auto;
+  margin-top: 2rem;
+  padding: 1.5rem;
+  -webkit-box-shadow: 2px 2px 13px -4px rgba(0, 0, 0, 0.21);
+  box-shadow: 2px 2px 13px -4px rgba(0, 0, 0, 0.21);
+  font-size: 1.4rem;
+  color: var(--primary);
+}
+
+/*────────────────── Header Bar ──────────────────*/
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  /* Reduce vertical and horizontal space */
+  margin-top: 1rem;
+  /* Smaller top margin */
+  font-size: 1rem;
+  /* Smaller base text size */
+  border-radius: var(--radius);
+  /* Keep if you want round corners */
+  background: linear-gradient(90deg, var(--primary), var(--primary-h));
+  color: var(--card);
+  box-shadow: var(--shadow);
+  flex-wrap: wrap;
+}
+
+.header-bar h1 {
+  font-size: 1.3rem;
+  margin: 0;
+}
+
+.header-bar h3 {
+  font-size: 1rem;
+  margin: 0.2rem 0 0 0;
+}
+
+.header-bar a {
+  color: var(--bg);
+  text-decoration: none;
+}
+
+
+/*────────────────── Search and Add ──────────────────*/
+#search-add-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+}
+
+#add-link {
+  /*This is what makes the search */
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 42px;
+  text-shadow: var(--shadow);
+}
+
+input[type=text],
+input[type=password],
+textarea {
+  border: 1px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 0.85rem 1.1rem; /* vertical / horizontal */
+  box-sizing: border-box;
+}
+
+label {
+  padding-top: 10px !important;
+  display: block;
+}
+
+/* ============== Button System ============== */
+:root {
+  --btn-pad-y: 0.45rem;
+  --btn-pad-x: 0.9rem;
+  --btn-radius: 4px;
+  --btn-font-size: 0.85rem;
+  --btn-weight: 500;
+  --btn-transition: 140ms ease;
+}
+
+/* Base button (links or buttons) */
+.button,
+.button:link,
+.button:visited,
+.submit {
+  background: var(--primary);
+  color: var(--card);
+  padding: var(--btn-pad-y) var(--btn-pad-x);
+  font-size: var(--btn-font-size);
+  line-height: 1;
+  font-weight: var(--btn-weight);
+  border: none;
+  border-radius: var(--btn-radius);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background var(--btn-transition),
+    color var(--btn-transition),
+    transform var(--btn-transition),
+    box-shadow var(--btn-transition);
+}
+
+.button:hover,
+.submit:hover {
+  background: var(--primary-h);
+}
+
+.button:focus-visible,
+.submit:focus-visible {
+  outline: 2px solid var(--primary-h);
+  outline-offset: 2px;
+}
+
+.button:active,
+.submit:active {
+  transform: translateY(1px);
+}
+
+/* Variant: New Note (inherits base) */
+.button--new-note {
+  min-width: 110px;
+  font-weight: 600;
+}
+
+/* Variant: Ghost (secondary) */
+.button.is-ghost,
+.button.is-ghost:link,
+.button.is-ghost:visited {
+  background: transparent;
+  color: var(--primary);
+  box-shadow: none;
+}
+
+.button.is-ghost:hover {
+  background: var(--accent);
+  color: var(--primary-h);
+}
+
+.button.is-ghost:focus-visible {
+  outline: 2px solid var(--primary);
+}
+
+/* Variant: Danger */
+.button.is-danger,
+.button.is-danger:link,
+.button.is-danger:visited {
+  background: #cf4949;
+  color: var(--card);
+}
+
+.button.is-danger:hover {
+  background: #b43737;
+}
+
+.button.is-danger:focus-visible {
+  outline: 2px solid #b43737;
+}
+.button--new-note,
+.button--new-note:link,
+.button--new-note:visited,
+#add-link.button {
+  color: var(--card) !important;
+}
+/* ============== Search + Add Bar Layout ============== */
+.search-add-bar {
+   display: flex;
+  align-items: center;
+  flex-wrap: wrap;        /* allows wrapping on narrow screens */
+  gap: 0.75rem;           /* <— this creates space between form and button */
+  margin: 0 0 1rem;
+}
+
+.search-add-bar form {
+  display: flex;
+  gap: 0.5rem;            /* space between input and Search button */
+  align-items: center;
+  margin: 0;
+}
+
+.search-add-bar a.button {
+  /* fallback spacing if gap wasn't applied (older browsers) */
+  margin-left: 0.75rem;
+}
+
+.button--new-note {
+  margin-left: 0.75rem; /* kept even if flex gap fails */
+}
+
+.search-add-bar input[type="text"] {
+  height: 2rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--primary);
+  border-radius: 999px;
+  outline: none;
+  background: var(--card);
+  font-size: 0.85rem;
+  line-height: 1;
+  transition: border-color var(--btn-transition), box-shadow var(--btn-transition);
+}
+
+.search-add-bar input[type="text"]:focus {
+  border-color: var(--primary-h);
+  box-shadow: 0 0 0 2px rgba(0, 94, 184, 0.15);
+}
+/*────────────────── Notes Display ──────────────────*/
+.note-image {
+    max-width: 150px;
+    max-height: 150px;
+    height: auto;
+    width: auto;
+    object-fit: cover;
+    border-radius: 6px;
+}
+.note-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.note-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.note-title a {
+  text-decoration: none;
+  margin-left: 10px;
+  
+}
+
+.note-complete-icon {
+  height: 20px;
+  width: 20px;
+  background-color: rgb(105, 192, 105);
+  border-radius: 50%;
+}
+
+.note-incomplete-icon {
+  height: 20px;
+  width: 20px;
+  background-color: #800020;
+  border-radius: 50%;
+}
+
+.note-status {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgb(218, 218, 218);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.note-detail {
+  background-color: var(--card);
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-top: 1.5rem;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.note-detail h2 {
+  color: var(--primary);
+  margin-top: 0;
+}
+
+.note-detail h1 {
+  color: var(--primary);
+  margin-top: 0;
+  font-size: 0.5rem;
+}
+
+.note-media {
+  flex: 0 0 35%;
+  display: flex;
+  flex-direction: row;
+  /* Change from column */
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.note-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;  
+}
+
+.note-content {
+  flex: 1 1 65%;
+  min-width: 0;
+}
+
+.note-snippet {
+  margin: .5rem 0 0;
+  font-size: .8rem;
+  color: var(--muted);
+}
+
+/* ▼ NEW: smaller timestamp line ▼ */
+.note-timestamps{
+  font-size:.72rem;      /* ~72 % of normal body text */
+  color:var(--muted);    /* optional grey tone        */
+}
+/*────────────────── Completion filter ──────────────────*/
+  /* tiny, unobtrusive radio bar */
+  .status-filter{
+      display:inline-flex;        /* keep it next to the search bar if space */
+      flex-direction:column;      /* stack radios vertically                  */
+      gap:.35rem;                 /* space between each option                */
+      font-size:.8rem;
+      margin:.4rem 0 1rem;
+  }
+  .status-filter label{
+      display:inline-flex;
+      gap:.2rem;
+      align-items:center;
+  }
+/*────────────────── Delete Link ──────────────────*/
+.delete-link {
+  font-size: 1.2rem;
+  color: #d00;
+  text-decoration: none;
+  padding-left: 0.3rem;
+  padding-right: 0.3rem;
+  align-self: center;
+  /* Align top */
+}
+/*────────────────── Tags ──────────────────*/
+.tag-field {
+  margin-top: 1rem;
+}
+
+.tag-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: .5rem;
+}
+
+.tag-pill {
+  background: var(--accent);
+  color: var(--primary-h);
+  padding: .3rem .7rem;
+  border-radius: 999px;
+  font-size: .7rem;
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  line-height: 1;
+  font-weight: 500;
+}
+
+.tag-pill-remove {
+  background: transparent;
+  border: none;
+  color: var(--primary-h);
+  cursor: pointer;
+  font-size: .9rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.tag-pill-remove:hover {
+  color: var(--primary);
+}
+
+.note-wrapper .tag-pill {
+  font-size: 0.6rem;
+  padding: 0.2rem 0.5rem;
+}
+
+/*────────────────── Regsiter format ──────────────────*/
+.help ul {
+  list-style: disc;
+  padding-left: 1.2rem;
+  margin: .4rem 0 .3rem;
+  font-size: .78rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.auth-form h1 {
+  margin-top: 0;
+  font-size: 2.2rem;
+  color: var(--primary);
+}
+
+.form-row {
+  margin-bottom: 1.2rem;
+}
+
+.form-row label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.4rem;
+  color: var(--primary);
+}
+
+.form-row input[type="text"],
+.form-row input[type="password"],
+.form-row input[type="email"] {
+  width: 100%;
+  max-width: 340px;
+  padding: 0.5rem 1.1rem;
+
+  border: 1px solid var(--primary);
+  border-radius: 999px;
+  font-size: 0.9rem;
+  background: var(--card);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.form-row input:focus {
+  border-color: var(--primary-h);
+  box-shadow: 0 0 0 2px rgba(0,94,184,.15);
+}
+
+.help {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.35rem;
+  line-height: 1.3;
+  max-width: 520px;
+}
+
+.error {
+  color: #c0392b;
+  font-size: 0.75rem;
+  margin-top: 0.3rem;
+  font-weight: 600;
+}
+
+.alt-link {
+  margin-top: 1.4rem;
+  font-size: 0.9rem;
+}
+
+.alt-link .button.small {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.7rem;
+  border-radius: 4px;
+}
+
+/*────────────────── Sections & Filters ──────────────────*/
+.dash-section {
+  margin: 2rem 0;
+}
+
+.tag-filter-controls,
+.filter-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .75rem;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: .75rem;
+}
+
+.tag-option {
+  cursor: pointer;
+  padding: .25rem .65rem;
+  font-size: .7rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--primary-h);
+  transition: background .15s, color .15s;
+}
+.tag-option:hover { background: var(--primary-h); color: var(--card); }
+.tag-option.selected { background: var(--primary); color: var(--card); }
+
+
+/*────────────────── Tag variants ──────────────────*/
+.tag-container--inline { display: inline-flex; gap: .4rem; }
+.tag-pill--small {
+  font-size: .55rem;
+  padding: .15rem .45rem;
+}
+
+/*────────────────── Misc ──────────────────*/
+.input {            /* generic input helper */
+  border: 1px solid var(--primary);
+  border-radius: 999px;
+  padding: .55rem 1rem;
+  font-size: .8rem;
+  background: var(--card);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.input:focus {
+  border-color: var(--primary-h);
+  box-shadow: 0 0 0 2px rgba(0,94,184,.15);
+}
+
+.note-snippet {
+  margin: .5rem 0 0;
+  font-size: .8rem;
+  color: var(--muted);
+}
+.group-colour-toggle { font-weight: 600; }
+
+
+/* =============== Responsive tweaks =============== */
+@media (max-width: 768px) {
+  .top-nav {
+    padding: 0.5rem 0.9rem;
+  }
+
+  .top-nav .nav-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .top-nav .nav {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .top-nav .nav a {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .top-nav .nav {
+    flex-direction: column;
+  }
+  .top-nav .nav a {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/*────────────────── Tiny‑screen fix (phones ≤ 480 px) ──────────────────*/
+@media (max-width: 480px){
+
+  /* 1) Stack the entire bar vertically */
+  #search-add-wrapper{
+      flex-direction: column;   /* ← was row */
+      align-items: stretch;     /* full‑width children */
+      gap: 0.9rem;              /* little breathing room */
+  }
+
+  /* 2) Make the search input stretch to full width */
+  #search-add-wrapper input[type="text"]{
+      width: 100%;
+  }
+
+  /* 3) The “New Note” button should also fill the line */
+  .button--new-note{
+      width: 100%;              /* block‑level button */
+      text-align: center;
+  }
+
+  /* 4) Status filter can go horizontal now that it has its own line */
+  .status-filter{
+      flex-direction: row;      /* radios left‑to‑right */
+      gap: .75rem;
+  }
+}

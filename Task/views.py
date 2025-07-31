@@ -27,12 +27,32 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
+from rest_framework import viewsets
+
+from .serializers import NotesSerializer
+
 
 # ── Local apps ──────────────────────────────────────────────────────
 from .models import Note, Tag
 
 
+# ───────────────────────────────────────────────────────────
+# API construction
+# ───────────────────────────────────────────────────────────
 
+class NoteAPIView(viewsets.ModelViewSet):
+    queryset = Note.objects.all()
+    serializer_class = NotesSerializer
+
+
+
+
+
+
+
+# ───────────────────────────────────────────────────────────
+# Context methods
+# ───────────────────────────────────────────────────────────
 
 class NoteList(LoginRequiredMixin, ListView):
     template_name = "Notes/notes_list.html"

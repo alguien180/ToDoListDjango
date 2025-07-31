@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -9,13 +10,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-duf)_lhi0mvx-xp2p*hj^r29#$o4j-or2cpd9!h^_-i*j$8-(q'
+SECRET_KEY = config('DJANGO_SECRET_KEY', default='dev-insecure-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [".awsapprunner.com"]
+ALLOWED_HOSTS = [".awsapprunner.com","127.0.0.1"]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://8u8uwt7gjw.us-east-1.awsapprunner.com'
+]
 
 # Application definition
 
@@ -29,6 +33,7 @@ INSTALLED_APPS = [
     'Task',
     'security',
     'simple_history',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -106,7 +111,7 @@ LOGIN_URL='login' #where to redirect IF NOT AUTHENTICATED
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [ BASE_DIR / "static" ]
 
 # Default primary key field type
