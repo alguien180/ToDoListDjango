@@ -15,11 +15,19 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default='dev-insecure-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [".awsapprunner.com","127.0.0.1"]
+ALLOWED_HOSTS = [
+    ".awsapprunner.com",       # AWS internal domain
+    "127.0.0.1",               # Localhost
+    "miguelrandomlab.uk",      # Root domain
+    "www.miguelrandomlab.uk",  # Optional www
+]
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://8u8uwt7gjw.us-east-1.awsapprunner.com'
+    'https://8u8uwt7gjw.us-east-1.awsapprunner.com',
+    'https://miguelrandomlab.uk',
+    'https://www.miguelrandomlab.uk',
 ]
+
 
 # Application definition
 
